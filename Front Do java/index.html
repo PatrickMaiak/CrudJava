@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tarefas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Estilização do card grande */
+        .overlay {
+            display: none;          
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);       
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .big-card {
+            width: 1040px;          
+            height: 1216px;
+            border-radius: 20px;
+            background: #f5f5f5;
+            padding: 3rem;
+            border: 4px solid #008bf8;
+            box-shadow: 0 8px 36px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            position: relative;
+        }
+
+        .big-card input,
+        .big-card textarea {
+            width: 90%;
+            padding: 10px;
+            font-size: 1.5rem;
+            border: 2px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .big-card button {
+            background-color: #008bf8;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            border-radius: 10px;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 2rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        .card {
+            width: 260px;
+            height: 354px;
+            border-radius: 20px;
+            background: #f5f5f5;
+            position: relative;
+            padding: 1.8rem;
+            border: 2px solid #c3c6ce;
+            transition: 0.5s ease-out;
+            overflow: visible;
+        }
+
+        .card-details {
+            color: black;
+            height: 100%;
+            gap: .5em;
+            display: grid;
+            place-content: center;
+        }
+
+        .card-button {
+            transform: translate(-50%, 125%);
+            width: 60%;
+            border-radius: 1rem;
+            border: none;
+            background-color: #008bf8;
+            color: #fff;
+            font-size: 1rem;
+            padding: .5rem 1rem;
+            position: absolute;
+            left: 50%;
+            bottom: 0;
+            opacity: 0;
+            transition: 0.3s ease-out;
+        }
+
+        .text-body {
+            color: rgb(134, 134, 134);
+            overflow-x: auto;
+        }
+
+        
+        .text-title {
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+     
+        .card:hover {
+            border-color: #008bf8;
+            box-shadow: 0 4px 18px 0 rgba(0, 0, 0, 0.25);
+        }
+
+        .card:hover .card-button {
+            transform: translate(-50%, 50%);
+            opacity: 1;
+        }
+
+        #task-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+           
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">Tarefas</a>
+        </div>
+        <div class="container-fluid">
+            <!-- <a class="btn btn-success" href="">Adicionar</a> -->
+            <button id="openCard" class="btn btn-success">Adicionar</button>
+
+        </div>
+        <button id="delete-mode-btn" class="btn btn-danger">Excluir</button>
+
+    </nav>
+
+
+
+
+    <!-- Main Content -->
+    <main class="container mt-4">
+
+        <div class="overlay" id="overlay">
+            <div class="big-card">
+                <button class="close-btn" id="closeCard">&times;</button>
+                <h2>Registrar Nova Tarefa</h2>
+                <input type="text" id="taskTitle" placeholder="Título da Tarefa">
+                <textarea id="taskDescription" rows="5" placeholder="Descrição"></textarea>
+                <button id="saveTask">Salvar</button>
+            </div>
+        </div>
+
+        <div class="row g-4" id="task-container">
+
+        </div>
+    </main>
+
+    <script>
+
+        // Elementos
+        const openCardBtn = document.getElementById("openCard");
+        const closeCardBtn = document.getElementById("closeCard");
+        const overlay = document.getElementById("overlay");
+
+        // Abrir o card
+        openCardBtn.addEventListener("click", () => {
+            overlay.style.display = "flex";
+        });
+
+        // Fechar o card
+        closeCardBtn.addEventListener("click", () => {
+            overlay.style.display = "none";
+        });
+
+       
+        document.getElementById("saveTask").addEventListener("click", () => {
+            const titulo = document.getElementById("taskTitle").value;
+            const descricao = document.getElementById("taskDescription").value;
+
+            if (titulo.trim() === "" || descricao.trim() === "") {
+                alert("Preencha todos os campos!");
+                return;
+            }
+
+            console.log("Nova tarefa:", { titulo, descricao });
+            enviarParaAPI(titulo, descricao);
+            overlay.style.display = "none";
+        });
+
+        async function enviarParaAPI(titulo, descricao) {
+            try {
+                const response = await fetch("http://localhost:8081/tarefas", { 
+                    method: "POST",  
+                    headers: {
+                        "Content-Type": "application/json" 
+                    },
+                    body: JSON.stringify({ 
+                        titulo: titulo,
+                        descricao: descricao
+                    })
+                });
+
+
+                if (!response.ok) {
+                    throw new Error(`Erro ao enviar tarefa: ${response.statusText}`);
+                }
+
+                await fetchTarefas();
+                const data = await response.json();
+                console.log("Resposta da API:", data);
+                alert("Tarefa adicionada com sucesso!");
+               
+
+            } catch (error) {
+                console.error("Erro na requisição:", error);
+                alert("Erro ao adicionar tarefa. Tente novamente.");
+            }
+        }
+       
+        const fetchTarefas = async () => {
+            const response = await fetch('http://localhost:8081/tarefas');
+            const tarefas = await response.json();
+
+           
+            const container = document.getElementById('task-container');
+            container.innerHTML = ''; 
+
+            tarefas.forEach(tarefa => {
+               
+                const taskCard = document.createElement('div');
+                taskCard.classList.add('card');
+
+                taskCard.innerHTML = `
+                    <input type="checkbox" class="delete-checkbox" data-id="${tarefa.id}" style="display: none;">
+                    <div class="card-details">
+                        <p class="text-title">${tarefa.titulo}</p>
+                        <p class="text-body">${tarefa.descricao}</p>
+                    </div>
+                    <button class="card-button">${tarefa.ativo ? 'Feito' : 'Pendente'}</button>
+                `;
+
+                container.appendChild(taskCard);
+            });
+        };
+
+      
+        window.onload = fetchTarefas;
+
+        const deleteModeBtn = document.getElementById('delete-mode-btn');
+        let deleteMode = false;
+
+      
+        deleteModeBtn.addEventListener('click', async () => {
+            if (deleteMode) {
+                // Confirma a exclusão das tarefas
+                const selectedTasks = document.querySelectorAll('.delete-checkbox:checked');
+                const deletePromises = Array.from(selectedTasks).map(async (checkbox) => {
+                    const taskId = checkbox.dataset.id; 
+
+                    try {
+                        const response = await fetch(`http://localhost:8081/tarefas/${taskId}`, {
+                            method: 'DELETE'
+                        });
+
+                        if (response.ok) {
+                            checkbox.parentElement.remove(); 
+                        } else {
+                            console.error(`Erro ao excluir tarefa ID ${taskId}`);
+                        }
+                    } catch (error) {
+                        console.error(`Erro na requisição: ${error}`);
+                    }
+                });
+
+                await Promise.all(deletePromises); // Aguarda todas as exclusões
+                deleteMode = false;
+                deleteModeBtn.textContent = 'Excluir';
+                document.querySelectorAll('.delete-checkbox').forEach(checkbox => checkbox.style.display = 'none');
+            } else {
+                // Alterna o modo de exclusão
+                deleteMode = true;
+                const checkboxes = document.querySelectorAll('.delete-checkbox');
+
+                checkboxes.forEach(checkbox => {
+                    checkbox.style.display = 'block'; // Mostra os checkboxes
+                });
+
+                deleteModeBtn.textContent = 'Confirmar Exclusão'; // Muda o texto do botão para "Confirmar Exclusão"
+            }
+        });
+    </script>
+
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
