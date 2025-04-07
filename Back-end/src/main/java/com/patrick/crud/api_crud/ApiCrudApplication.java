@@ -1,8 +1,8 @@
 package com.patrick.crud.api_crud;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.ComponentScan;
+import org.springframework.boot.*;
+import org.springframework.boot.autoconfigure.*;
+import org.springframework.context.annotation.*;
 
 @SpringBootApplication
 @ComponentScan(basePackages = {"com/patrick/crud/api_crud/Controllers", "com/patrick/crud/api_crud/Service", "com/patrick/crud/api_crud/Entity","com/patrick/crud/api_crud/Config" })

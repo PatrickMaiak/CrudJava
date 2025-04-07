@@ -1,6 +1,7 @@
  // Elementos
- const openCardBtn = document.getElementById("openCard");
+
  const closeCardBtn = document.getElementById("closeCard");
+const openCardBtn = document.getElementById("openCard");
  const overlay = document.getElementById("overlay");
 
  // Abrir o card
