@@ -1,18 +1,25 @@
- // Elementos
+
 
  const closeCardBtn = document.getElementById("closeCard");
 const openCardBtn = document.getElementById("openCard");
  const overlay = document.getElementById("overlay");
+ const agora = new Date().toISOString();
 
- // Abrir o card
+
  openCardBtn.addEventListener("click", () => {
      overlay.style.display = "flex";
  });
 
- // Fechar o card
+
  closeCardBtn.addEventListener("click", () => {
      overlay.style.display = "none";
  });
+ 
+ function toggleNav() {
+    const nav = document.getElementById("nav");
+    nav.classList.toggle("show");
+}
+
 
 
  document.getElementById("saveTask").addEventListener("click", () => {
@@ -71,30 +78,89 @@ const openCardBtn = document.getElementById("openCard");
  }
 
  const fetchTarefas = async () => {
-     const response = await fetch('http://localhost:8081/tarefas');
-     const tarefas = await response.json();
+    try {
+        const response = await fetch('http://localhost:8081/tarefas');
 
-    
-     const container = document.getElementById('task-container');
-     container.innerHTML = ''; 
+        if (!response.ok) {
+            throw new Error(`Erro na resposta: ${response.status}`);
+        }
 
-     tarefas.forEach(tarefa => {
-        
-         const taskCard = document.createElement('div');
-         taskCard.classList.add('card');
+        const tarefas = await response.json();
 
-         taskCard.innerHTML = `
-             <input type="checkbox" class="delete-checkbox" data-id="${tarefa.id}" style="display: none;">
-             <div class="card-details">
-                 <p class="text-title">${tarefa.titulo}</p>
-                 <p class="text-body">${tarefa.descricao}</p>
-             </div>
-             <button onclick="alterarStatus(${tarefa.id})" class="card-button">${tarefa.ativo ? 'Feito' : 'Pendente'}</button>
-         `;
+        const container = document.getElementById('task-container');
+        container.innerHTML = '';
 
-         container.appendChild(taskCard);
-     });
- };
+        tarefas.forEach(tarefa => {
+            const taskCard = document.createElement('div');
+            taskCard.classList.add('card');
+
+            taskCard.innerHTML = `
+                <input type="checkbox" class="delete-checkbox" data-id="${tarefa.id}" style="display: none;">
+                <div class="card-details" onclick="entrarModoEdicao(${tarefa.id}, '${tarefa.titulo}', '${tarefa.descricao}', ${tarefa.ativo}, '${tarefa.creationTimestamp}')">
+                    <p class="text-title">${tarefa.titulo}</p>
+                    <p class="text-body">${tarefa.descricao}</p>
+                </div>
+                <button onclick="alterarStatus(${tarefa.id})" class="card-button">${tarefa.ativo ? 'Feito' : 'Pendente'}</button>
+            `;
+
+            container.appendChild(taskCard);
+        });
+
+    } catch (error) {
+        console.error("Erro ao buscar tarefas:", error);
+        alert("⚠️ Falha ao conectar com o backend. Verifique se o servidor está online.");
+    }
+};
+
+
+ function entrarModoEdicao(id, titulo, descricao, ativo) {
+    const card = event.currentTarget.parentElement;
+
+    card.innerHTML = `
+        <input type="text" id="edit-titulo-${id}" value="${titulo}" />
+        <input type="text" id="edit-descricao-${id}" value="${descricao}" />
+        <label>
+            Ativo: <input type="checkbox" id="edit-ativo-${id}" ${ativo ? 'checked' : ''} />
+        </label>
+        <button onclick="salvarEdicao(${id})">Salvar</button>
+        <button onclick="fetchTarefas()">Cancelar</button>
+    `;
+}
+function salvarEdicao(id) {
+    const titulo = document.getElementById(`edit-titulo-${id}`).value;
+    const descricao = document.getElementById(`edit-descricao-${id}`).value;
+    const ativo = document.getElementById(`edit-ativo-${id}`).checked;
+
+    const tarefaAtualizada = {
+        titulo,
+        descricao,
+        ativo,
+       
+        updateTimestamp: agora
+    };
+
+    fetch(`http://localhost:8081/tarefas/${id}/edit`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(tarefaAtualizada)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error("Erro ao editar a tarefa");
+        }
+        return response.json();
+    })
+    .then(() => {
+        alert("Tarefa atualizada com sucesso!");
+        fetchTarefas();
+    })
+    .catch(error => {
+        console.error("Erro:", error);
+        alert("Erro ao editar a tarefa.");
+    });
+}
 
 
  window.onload = fetchTarefas;
@@ -105,7 +171,7 @@ const openCardBtn = document.getElementById("openCard");
 
  deleteModeBtn.addEventListener('click', async () => {
      if (deleteMode) {
-         // Confirma a exclusão das tarefas
+         
          const selectedTasks = document.querySelectorAll('.delete-checkbox:checked');
          const deletePromises = Array.from(selectedTasks).map(async (checkbox) => {
              const taskId = checkbox.dataset.id; 
@@ -125,19 +191,19 @@ const openCardBtn = document.getElementById("openCard");
              }
          });
 
-         await Promise.all(deletePromises); // Aguarda todas as exclusões
+         await Promise.all(deletePromises); 
          deleteMode = false;
          deleteModeBtn.textContent = 'Excluir';
          document.querySelectorAll('.delete-checkbox').forEach(checkbox => checkbox.style.display = 'none');
      } else {
-         // Alterna o modo de exclusão
+        
          deleteMode = true;
          const checkboxes = document.querySelectorAll('.delete-checkbox');
 
          checkboxes.forEach(checkbox => {
-             checkbox.style.display = 'block'; // Mostra os checkboxes
+             checkbox.style.display = 'block';
          });
 
-         deleteModeBtn.textContent = 'Confirmar Exclusão'; // Muda o texto do botão para "Confirmar Exclusão"
+         deleteModeBtn.textContent = 'Confirmar Exclusão';
      }
  });

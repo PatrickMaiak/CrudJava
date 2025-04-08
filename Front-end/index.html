@@ -11,13 +11,14 @@
 
 <body>
 
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <button id="hamburger" onclick="toggleNav()">&#9776;</button>
+
+    <nav id="nav" class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
             <a class="navbar-brand" href="#">Tarefas</a>
         </div>
         <div class="container-fluid">
-            <!-- <a class="btn btn-success" href="">Adicionar</a> -->
+         
             <button id="openCard" class="btn btn-success">Adicionar</button>
 
         </div>
@@ -28,7 +29,7 @@
 
 
 
-    <!-- Main Content -->
+   
     <main class="container mt-4">
 
         <div class="overlay" id="overlay">
