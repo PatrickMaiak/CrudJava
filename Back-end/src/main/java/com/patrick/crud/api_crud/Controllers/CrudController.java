@@ -7,6 +7,8 @@ import com.patrick.crud.api_crud.Mappers.TarefasMapper;
 import com.patrick.crud.api_crud.Service.TarefaService;
 
 import org.springframework.beans.factory.annotation.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -29,13 +31,19 @@ public class CrudController {
 
     }
     @PostMapping
-    public TarefasDto salvar(@RequestBody TarefasDto tarefa){
+    public ResponseEntity<TarefasDto> salvar(@RequestBody TarefasDto tarefa){
 
-        Tarefas tarefaDetails = TarefasMapper.toEntity(tarefa);
+        try { Tarefas tarefaDetails = TarefasMapper.toEntity(tarefa);
 
-        Tarefas tarefasSaved = service.salvar(tarefaDetails);
+            Tarefas tarefasSaved = service.salvar(tarefaDetails);
 
-        return TarefasMapper.toDto(tarefasSaved);
+            return new ResponseEntity<TarefasDto>(TarefasMapper.toDto(tarefasSaved), HttpStatus.OK);
+
+        }
+        catch (Exception e){
+            return  new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        }
+
     }
 
 
